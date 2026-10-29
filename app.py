@@ -40,10 +40,11 @@ if uploaded_file and groq_api_key:
         vectorstore = Chroma.from_documents(splits, embeddings)
         retriever = vectorstore.as_retriever()
         
-        llm = ChatGroq(model_name="openai/gpt-oss-20b", groq_api_key=groq_api_key)
+        # Upgraded to Llama 3.3 70B for strict, accurate RAG answers
+        llm = ChatGroq(model_name="llama-3.3-70b-versatile", groq_api_key=groq_api_key)
         
         prompt = ChatPromptTemplate.from_template(
-            "Answer the question based strictly on the following context:\n\n{context}\n\nQuestion: {question}"
+            "Answer the question based strictly on the provided document context below. Do not guess or hallucinate.\n\nContext:\n{context}\n\nQuestion: {question}"
         )
         
         rag_chain = (
@@ -55,6 +56,11 @@ if uploaded_file and groq_api_key:
     
     st.success("Document processed successfully!")
     
+    # Optional debug view so you and your husband can see the actual extracted PDF text
+    with st.expander("🔍 View Extracted Document Content"):
+        for i, doc in enumerate(docs):
+            st.write(f"**Page {i+1}:** {doc.page_content[:500]}...")
+
     query = st.text_input("Ask a question about your document:")
     if query:
         with st.spinner("Thinking..."):
